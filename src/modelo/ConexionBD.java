@@ -1,10 +1,6 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package modelo;
 
+import controlador.FunctionProperties;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
@@ -17,27 +13,10 @@ import java.util.ResourceBundle;
 import pojo.CdrSms;
 import pojo.FileCdr;
 
-/**
- *
- * @author edgar.hurtarte
- */
-public class ConexionBD {
-    
-    
-    ResourceBundle rb = ResourceBundle.getBundle("properties.configuration");     
-    String host = rb.getString("host");
-    String userdb = rb.getString("userdb");
-    String passdb = rb.getString("passdb");
-    String port = rb.getString("port");
-    String valconnect = rb.getString("valconnect");
-    String connect = rb.getString("connect");
-    
-    
+
+public class ConexionBD extends FunctionProperties {
 
     private String classfor="oracle.jdbc.OracleDriver";
-    private String url="jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST="+host+")(PORT="+port+"))(CONNECT_DATA=("+connect+"="+valconnect+")))";
-    private String usuario=userdb;
-    private String clave=passdb;
     
     private Connection con=null;
     private PreparedStatement pr=null;
@@ -48,7 +27,16 @@ public class ConexionBD {
     CdrSms cdrSms = new CdrSms();
     
    
-    public CdrSms findCdr(String id){
+    public CdrSms findCdr(String id) throws IOException{
+    String host = this.getProperties("host");
+    String userdb = this.getProperties("userdb");
+    String passdb = this.getProperties("passdb");
+    String port = this.getProperties("port");
+    String valconnect = this.getProperties("valconnect");
+    String connect = this.getProperties("connect");
+    String usuario=userdb;
+    String clave=passdb;
+    String url="jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST="+host+")(PORT="+port+"))(CONNECT_DATA=("+connect+"="+valconnect+")))";
         
       try{
             Class.forName(classfor);
@@ -76,8 +64,17 @@ public class ConexionBD {
         
     }
     
-    public CdrSms findCdrSended(String id){
-         String sql="UPDATE TB_CDR_MERKA SET STATUS_CDR='SEND' WHERE ID_FILE=?";
+    public CdrSms findCdrSended(String id) throws IOException{
+    String host = this.getProperties("host");
+    String userdb = this.getProperties("userdb");
+    String passdb = this.getProperties("passdb");
+    String port = this.getProperties("port");
+    String valconnect = this.getProperties("valconnect");
+    String connect = this.getProperties("connect");
+    String usuario=userdb;
+    String clave=passdb;
+    String url="jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST="+host+")(PORT="+port+"))(CONNECT_DATA=("+connect+"="+valconnect+")))";
+    String sql="UPDATE TB_CDR_MERKA SET STATUS_CDR='SEND' WHERE ID_FILE=?";
          
     
       try{
@@ -106,7 +103,16 @@ public class ConexionBD {
         
     }
       
-    public ArrayList<FileCdr> findFiles(){
+    public ArrayList<FileCdr> findFiles() throws IOException{
+    String host = this.getProperties("host");
+    String userdb = this.getProperties("userdb");
+    String passdb = this.getProperties("passdb");
+    String port = this.getProperties("port");
+    String valconnect = this.getProperties("valconnect");
+    String connect = this.getProperties("connect");
+    String usuario=userdb;
+    String clave=passdb;
+    String url="jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST="+host+")(PORT="+port+"))(CONNECT_DATA=("+connect+"="+valconnect+")))";
       ArrayList<FileCdr> arrayFiles = new ArrayList<FileCdr>();
       
       String sql="SELECT * FROM TB_FILE";
@@ -153,7 +159,16 @@ public class ConexionBD {
       return arrayFiles;
       }
       
-    public int insertCdr(CdrSms cdrSms){
+    public int insertCdr(CdrSms cdrSms) throws IOException{
+    String host = this.getProperties("host");
+    String userdb = this.getProperties("userdb");
+    String passdb = this.getProperties("passdb");
+    String port = this.getProperties("port");
+    String valconnect = this.getProperties("valconnect");
+    String connect = this.getProperties("connect");
+    String usuario=userdb;
+    String clave=passdb;
+    String url="jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST="+host+")(PORT="+port+"))(CONNECT_DATA=("+connect+"="+valconnect+")))";    
       
         String sql="INSERT INTO TB_FILE_CDR_MERKA (ID,SEQUENCE_NUMBER,NAME_FILE, CDR_DATE_CREATE, CDR_DATE_PROCESSED,DESTINATION_NUMBER,SUBSCRIBER_ID,STATUS_CDR)" +
         "VALUES (?,?,?,?,?,?,?,?)";
@@ -206,7 +221,16 @@ public class ConexionBD {
       return id;
       }
       
-    public String insertFile(String fileName,String date){
+    public String insertFile(String fileName,String date) throws IOException{
+    String host = this.getProperties("host");
+    String userdb = this.getProperties("userdb");
+    String passdb = this.getProperties("passdb");
+    String port = this.getProperties("port");
+    String valconnect = this.getProperties("valconnect");
+    String connect = this.getProperties("connect");
+    String usuario=userdb;
+    String clave=passdb;
+    String url="jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST="+host+")(PORT="+port+"))(CONNECT_DATA=("+connect+"="+valconnect+")))";    
       
         String sql="INSERT INTO TB_FILE (ID,NAME_FILE,DATE_READ)" +
         "VALUES (?,?,?)";
@@ -253,7 +277,16 @@ public class ConexionBD {
       return id;
       }
     
-    public int insertDataFile(ArrayList<FileCdr> fileCdr){
+    public int insertDataFile(ArrayList<FileCdr> fileCdr) throws IOException{
+    String host = this.getProperties("host");
+    String userdb = this.getProperties("userdb");
+    String passdb = this.getProperties("passdb");
+    String port = this.getProperties("port");
+    String valconnect = this.getProperties("valconnect");
+    String connect = this.getProperties("connect");
+    String usuario=userdb;
+    String clave=passdb;
+    String url="jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST="+host+")(PORT="+port+"))(CONNECT_DATA=("+connect+"="+valconnect+")))";
         String sql=null;
         int id=0;
         try
@@ -269,7 +302,7 @@ public class ConexionBD {
                 sql="INSERT INTO TB_FILE (ID,NAME_FILE,DATE_READ)" +
                 "VALUES (SEQ_FILE.nextval"+",'"+cdr.getNameFile()+"','"+cdr.getDateRead()+"')";
           
-                System.out.println(sql);
+                //System.out.println(sql);
                 ps.executeUpdate(sql);
             }
             id=1;
@@ -299,7 +332,16 @@ public class ConexionBD {
       return id;
       }
     
-    public int insertDataCdr(ArrayList<CdrSms> dataCdr){
+    public int insertDataCdr(ArrayList<CdrSms> dataCdr) throws IOException{
+    String host = this.getProperties("host");
+    String userdb = this.getProperties("userdb");
+    String passdb = this.getProperties("passdb");
+    String port = this.getProperties("port");
+    String valconnect = this.getProperties("valconnect");
+    String connect = this.getProperties("connect");
+    String usuario=userdb;
+    String clave=passdb;
+    String url="jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST="+host+")(PORT="+port+"))(CONNECT_DATA=("+connect+"="+valconnect+")))";
         String sql=null;
         int id=0;
         try
@@ -330,7 +372,7 @@ public class ConexionBD {
                                    "','" + 
                       cdr.getStatus() +
                                      "')";
-                    System.out.println(sql);
+                    //System.out.println(sql);
                 ps.executeUpdate(sql);
             }
             id=1;
@@ -360,7 +402,16 @@ public class ConexionBD {
       return id;
       }
       
-    public String sequence(String sequence){
+    public String sequence(String sequence) throws IOException{
+    String host = this.getProperties("host");
+    String userdb = this.getProperties("userdb");
+    String passdb = this.getProperties("passdb");
+    String port = this.getProperties("port");
+    String valconnect = this.getProperties("valconnect");
+    String connect = this.getProperties("connect");
+    String usuario=userdb;
+    String clave=passdb;
+    String url="jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST="+host+")(PORT="+port+"))(CONNECT_DATA=("+connect+"="+valconnect+")))";    
       String seq="";
         try{
             Class.forName(classfor);

@@ -9,6 +9,7 @@ public class CdrJson {
     private String dnB; 
     private String ServiceType; 
     private String TimeStamp;
+    
 
 
     public String getRequestId() {

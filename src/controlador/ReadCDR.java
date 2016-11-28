@@ -1,15 +1,19 @@
 package controlador;
 
-
-
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -30,8 +34,10 @@ import pojo.EstructureObjectJson;
 import pojo.FileCdr;
 
 
-public class ReadCDR {
+public class ReadCDR extends FunctionProperties {
     
+    
+    private String wsnull="";
     public static String ANSI_RED = "\u001B[31m";
     
     //private final ResourceBundle rb = ResourceBundle.getBundle("properties.configuration"); 
@@ -51,13 +57,12 @@ public class ReadCDR {
     //la carpeta y filtra los que no tienen saldo para mensajitos
     public ArrayList<CdrSms> getAllCdrs(ArrayList<FileCdr> arrayFileCdr) throws IOException{   
         ConexionBD saveCdrBd = new ConexionBD();
-        ResourceBundle rb = ResourceBundle.getBundle("properties.configuration");     
-        String path = rb.getString("path");
-        String data = rb.getString("data");
-        String pathLogs = rb.getString("pathLogs");
-        String activeLogs = rb.getString("logs");
-        String split = rb.getString("split");
-        String head = rb.getString("head");
+        String path = this.getProperties("path");   
+        String data = this.getProperties("data");
+        String pathLogs = this.getProperties("pathLogs");
+        String activeLogs = this.getProperties("logs");
+        String split = this.getProperties("split");
+        String head = this.getProperties("head");
         String txtlogs=""; 
         
         
@@ -177,6 +182,7 @@ public class ReadCDR {
                             cdr.setDateReadCdr(dateTimeToday);
                             cdr.setDestinationNumber(destinationNumber);
                             cdr.setStatus(status);
+                            
                          
                             
                             if(cdr.getStatus().equals("READ")){
@@ -263,9 +269,9 @@ public class ReadCDR {
     }  
         
     
-    public void createData(ArrayList<CdrSms> cdrArray){
-        ResourceBundle rb = ResourceBundle.getBundle("properties.configuration");  
-        String data = rb.getString("data");        
+    public void createData(ArrayList<CdrSms> cdrArray) throws IOException{
+    
+        String data = this.getProperties("data");    
         
         FormatDate formatDate = new FormatDate();
         
@@ -300,7 +306,7 @@ public class ReadCDR {
     
     
     //Obtiene los archivos Cdr's nuevos de la carpeta configurada en properties 
-    public ArrayList<FileCdr> findFilesCdr(){
+    public ArrayList<FileCdr> findFilesCdr() throws IOException{
         
         ArrayList<FileCdr> arrayFileCdr = new ArrayList<FileCdr>();
         ArrayList<FileCdr> newFileCdr = new ArrayList<FileCdr>();        
@@ -310,9 +316,9 @@ public class ReadCDR {
         Calendar calendar = Calendar.getInstance();
         String dateTimeToday = dateFormat.format(calendar.getTime());
 
-        ResourceBundle rb = ResourceBundle.getBundle("properties.configuration");
-        String path = rb.getString("path");
-        String type = rb.getString("type");
+
+        String path = this.getProperties("path");
+        String type = this.getProperties("type");
         String files;
         File folder = new File(path);
         File[] listOfFiles = folder.listFiles();
@@ -361,15 +367,15 @@ public class ReadCDR {
     
     
     //valida formato del prefijo del numero destino
-    public boolean validateNumber(String number){
+    public boolean validateNumber(String number) throws IOException{
        
         boolean validate = false;
         int size = number.length();
         if (size >= 8) {
             // Aquí la carpeta que queremos explorar //
-            ResourceBundle rb = ResourceBundle.getBundle("properties.configuration");
-            String format = rb.getString("format");
-            String exception = rb.getString("initialcel");
+ 
+            String format = this.getProperties("format");
+            String exception = this.getProperties("initialcel");
             
             String formatString[] = format.split("[|]");
             String exceptionString[] = exception.split("[|]");
@@ -421,14 +427,13 @@ public class ReadCDR {
             
             DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");  //Formato 06/05/2014 16:00:22
             Calendar calendar = Calendar.getInstance();            
-            String dateTimeToday = dateFormat.format(calendar.getTime());
-            
+            String dateTimeToday = dateFormat.format(calendar.getTime());            
             cdrJson.setDnA(cdrSms.getSubscriberId());
             cdrJson.setDnB(cdrSms.getDestinationNumber());
             cdrJson.setRequestId(cdrSms.getIdSave());
             cdrJson.setTimeStamp(dateTimeToday);
-            objectCdrs.add(cdrJson);
-          
+            cdrJson.setServiceType("SMS");
+            objectCdrs.add(cdrJson);          
         }
             
             dataJson.setInboundSMSMessage(objectCdrs);
@@ -442,29 +447,38 @@ public class ReadCDR {
     
     
     public  void sendToWebService(String json, String url) {
+          
+  
             
             try {
-               
+                if(url==null){
+                url="";
+                    wsnull=" No envió registros";
+                }else{
+                    wsnull=" Formato correcto";
+                }
+                
                 String       postUrl       = url;// put in your url       
                 HttpClient   httpClient    = HttpClientBuilder.create().build();
                 HttpPost     post          = new HttpPost(postUrl);
                 StringEntity postingString = new StringEntity(json);//gson.tojson() converts your pojo to json
-                post.setEntity(postingString);
+                post.setEntity(postingString);                
                 post.setHeader("Content-type", "application/json");
+                post.setHeader("Authorization", "bd4ae7ocqoq26tb48s4iinvf4m27jvomgkut8lsu2sl8mpfn4c0s");
                 try {
                     HttpResponse  response = httpClient.execute(post);
-                    System.out.println(response.getStatusLine().getStatusCode());
+                    System.out.println("Respuesta del Webservice: "+response.getStatusLine().getStatusCode()+wsnull);
                 } catch (IOException ex) {
-                    System.out.println("Error format Json: "+ ex);
+                    System.out.println("Advertencia Json posible error: "+ ex);
                 }
-                
-                
+                                    
             } catch (UnsupportedEncodingException ex) {
-                 System.out.println("Error read URL: "+ ex);
+                 System.out.println("Error read URL: "+ ex+wsnull);
             }
 	
 		
 	}
+
     
 
 }

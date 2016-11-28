@@ -1,10 +1,7 @@
-
 package controlador;
-
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -26,46 +23,60 @@ import pojo.FileCdr;
 
 
 
-
-
-public class Main {
+public class Main extends FunctionProperties {
     
     
 
     public static void main(String[] args) throws IOException 
-    {   
-         ConexionBD bd = new ConexionBD();
-
+            
+    {  
+        ConexionBD bd = new ConexionBD();
         
-        ResourceBundle rb = ResourceBundle.getBundle("properties.configuration");     
-
         ReadCDR readCdr = new ReadCDR();  
+        
+        String webservicepath = readCdr.getProperties("wsdguatemala");   
         
         ArrayList<FileCdr> fileCdr = readCdr.findFilesCdr();
         
         ArrayList<CdrSms> arrayCdr = readCdr.getAllCdrs(fileCdr);  
         
-        String json = readCdr.cdrSmsToJson(arrayCdr); 
-                
-        System.out.println(json);
         
-        System.out.println("Envio de lote exitoso! a Merka, esperando registro a base de datos.....");
-        //solo se pueden enviar 10 sms en el lote
-        //envio a endpoint Guatemala
-        //readCdr.sendToWebService(json, wsdguatemala);
+        //Calculo de paquetes enviados de lotes en tamaño de 10
+        int size = arrayCdr.size();        
+        int send = size/10; 
+        int position = size;
+        int res = size % 10;
+        if (res!=0){
+            send = send + 1;
+        }        
         
-        bd.insertDataFile(fileCdr);
-        bd.insertDataCdr(arrayCdr);
         
-          
-          
-//        readCdr.createData(arrayCdr);
-//        
-//        for(FileCdr file : fileCdr){            
-//            bd.insertFile(file.getNameFile(), file.getDateRead());            
-//        }
+         for (int i = 0; i <= send; i++) {
+         ArrayList<CdrSms> lotesTen = new ArrayList<CdrSms>();
+             for (int j = 0; j <= 9; j++) {                 
+                 if((position-1)>=0){
+                 lotesTen.add(arrayCdr.get(position-1));                
+                 position=position-1;
+                 }
+             }
+             
+                  String json = readCdr.cdrSmsToJson(lotesTen);      
+                  System.out.println(json);
+
+
+                  //System.out.println("Envio de lote exitoso! a Merka, esperando registro a base de datos.....");
+                  //solo se pueden enviar 10 sms en el lote
+                  //envio a endpoint Guatemala
+                  readCdr.sendToWebService(json,webservicepath);
+                  
+                  
+
+         }
         
-        System.out.println("Finalizado registro a base de datos, de archivos leidos");
+                bd.insertDataFile(fileCdr);
+                bd.insertDataCdr(arrayCdr);
+        
+                System.out.println("Finalizado registro a base de datos, de archivos leidos");
     }
     
 
