@@ -4,11 +4,18 @@ import controlador.FunctionProperties;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
+
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+
 import java.util.ResourceBundle;
 import pojo.CdrSms;
 import pojo.FileCdr;
@@ -102,8 +109,9 @@ public class ConexionBD extends FunctionProperties {
       return cdrSms;
         
     }
-      
-    public ArrayList<FileCdr> findFiles() throws IOException{
+    
+    //busca nuevos cdr's 
+    public ArrayList<FileCdr> findFiles() throws IOException, ParseException{
     String host = this.getProperties("host");
     String userdb = this.getProperties("userdb");
     String passdb = this.getProperties("passdb");
@@ -115,17 +123,21 @@ public class ConexionBD extends FunctionProperties {
     String url="jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST="+host+")(PORT="+port+"))(CONNECT_DATA=("+connect+"="+valconnect+")))";
       ArrayList<FileCdr> arrayFiles = new ArrayList<FileCdr>();
       
-      String sql="SELECT * FROM TB_FILE";
+
+      
+     //String sql="select * from TB_FILE where date_read < trunc(SYSDATE)";
+      
+      String sql="select * from TB_FILE where date_read > trunc(SYSDATE)";
+      
         try
         {
             Class.forName(classfor);
             con=DriverManager.getConnection(url, usuario,clave);  
-            pr=con.prepareStatement(sql);   
-            rs=pr.executeQuery();
+            pr=con.prepareStatement(sql);
+            rs=pr.executeQuery(sql);
             
-            //obtiene valores de columna         
+            //obtiene valores de columna  
             
-       
                 while(rs.next()){
                     FileCdr file = new FileCdr();
                     file.setNameFile(rs.getString("NAME_FILE"));
@@ -136,6 +148,7 @@ public class ConexionBD extends FunctionProperties {
         catch (Exception exception){
                         
              exception.printStackTrace();
+             
         }
         finally{
 		if(con != null)
@@ -243,7 +256,7 @@ public class ConexionBD extends FunctionProperties {
             pr=con.prepareStatement(sql);
             pr.setString(1, id);
             pr.setString(2, fileName);
-            pr.setString(3, date);
+            pr.setString(3, "SYSDATE");
             
             if(pr.executeUpdate()!=1){
               System.out.println("Error al generar consulta , error en parametros en sentencia SQL");
@@ -300,7 +313,7 @@ public class ConexionBD extends FunctionProperties {
             for(FileCdr cdr : fileCdr){  
                 
                 sql="INSERT INTO TB_FILE (ID,NAME_FILE,DATE_READ)" +
-                "VALUES (SEQ_FILE.nextval"+",'"+cdr.getNameFile()+"','"+cdr.getDateRead()+"')";
+                "VALUES (SEQ_FILE.nextval"+",'"+cdr.getNameFile()+"',"+"SYSDATE"+")";
           
                 //System.out.println(sql);
                 ps.executeUpdate(sql);
@@ -433,7 +446,125 @@ public class ConexionBD extends FunctionProperties {
       }
           
       return seq;
-      }    
- 
+      }  
     
-}
+    public String inserTimeAltern(Date dateInit,Date dateFinish, long timeSend,long timeRead, long time) throws IOException{
+    String host = this.getProperties("host");
+    String userdb = this.getProperties("userdb");
+    String passdb = this.getProperties("passdb");
+    String port = this.getProperties("port");
+    String valconnect = this.getProperties("valconnect");
+    String connect = this.getProperties("connect");
+    String usuario=userdb;
+    String clave=passdb;
+    String url="jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST="+host+")(PORT="+port+"))(CONNECT_DATA=("+connect+"="+valconnect+")))";    
+      
+        String sql="INSERT INTO TB_FILE (ID,INIT_DATE,TIME_READ_CDR,TIME_SEND_MERKA,FINISH_TOTAL_TIME)" +
+        "VALUES (?,?,?,?)";
+        String id="-1";
+        try
+        {   
+            id=this.sequence("SEQ_TIME_MERKA");
+            int idVal = Integer.parseInt(id);
+            Class.forName(classfor);
+            con=DriverManager.getConnection(url, usuario,clave);
+            pr=con.prepareStatement(sql);
+            pr.setInt(1, idVal);
+            pr.setDate(2, new java.sql.Date(dateInit.getTime()));
+            pr.setLong(3, timeRead);
+            pr.setLong(4, timeSend);
+            pr.setDate(5, new java.sql.Date(dateFinish.getTime()));
+            
+            
+            if(pr.executeUpdate()!=1){
+              System.out.println("Error al generar consulta , error en parametros en sentencia SQL");
+              id="-1";
+            } 
+        }
+        catch (Exception exception){
+            System.out.println("Exception : " + exception.getMessage() + "  "+"error en base de datos");
+            id="-1";
+        }
+        finally
+	{
+		if(con != null)
+		{
+			try
+			{
+                                pr.close();
+				con.close();
+			}
+			catch (Exception ignored)
+			{
+				// ignore
+			}
+				
+		}
+	}
+        
+        
+      
+          
+      return id;
+      }
+ 
+    public int insertTime (String dateInit,String dateFinish, long timeSend,long timeRead, long time,int errorWs,int doneWs) throws IOException{
+        
+        String host = this.getProperties("host");
+        String userdb = this.getProperties("userdb");
+        String passdb = this.getProperties("passdb");
+        String port = this.getProperties("port");
+        String valconnect = this.getProperties("valconnect");
+        String connect = this.getProperties("connect");
+        String usuario=userdb;
+        String clave=passdb;
+        String url="jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST="+host+")(PORT="+port+"))(CONNECT_DATA=("+connect+"="+valconnect+")))";
+        String sql=null;
+        int id=0;
+        try
+        {   
+            Class.forName(classfor);
+            con=DriverManager.getConnection(url, usuario,clave);
+            System.out.println("Connected database successfully...");
+            
+            ps=con.createStatement();
+            
+                sql="INSERT INTO TB_TIME_MERKA (ID,INIT_DATE,TIME_READ_CDR,TIME_SEND_MERKA,FINISH_DATE,DIFFERENCE_TOTAL,ERROR_WS,DONE_WS) " +
+                "VALUES (SEQ_TIME_MERKA.nextval"+","+"TO_DATE('"+dateInit+"', 'dd/MM/yyyy hh24:mi:ss')"+","+timeRead+","+timeSend+","+"TO_DATE('"+dateFinish+"', 'dd/MM/yyyy hh24:mi:ss')"+","+time+","+errorWs+","+doneWs+")";
+          
+                //System.out.println(sql);
+                ps.executeUpdate(sql);
+           
+            id=1;
+            
+        }
+        catch (Exception exception){
+            System.out.println("Exception : " + exception.getMessage() + "  "+"error en base de datos");      
+        }
+        finally
+	{
+		if(con != null)
+		{
+			try
+			{
+                                pr.close();
+				con.close();
+			}
+			catch (Exception ignored)
+			{
+				// ignore
+			}
+				
+		}
+	}
+             
+          
+      return id;
+        
+    
+    
+    }
+    
+    
+    }
+

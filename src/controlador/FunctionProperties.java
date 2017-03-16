@@ -12,7 +12,7 @@ import java.io.IOException;
 public class FunctionProperties  {
     
     
-    public String getProperties(String key) throws FileNotFoundException, IOException  {
+public String getProperties(String key) throws FileNotFoundException, IOException  {
 
         String versionString = null;
         //to load application's properties, we use this class
@@ -20,8 +20,8 @@ public class FunctionProperties  {
 
         FileInputStream file;
         //the base folder is ./, the root of the main.properties file    
-        //String path = "C:\\Users\\edgar.hurtarte\\Documents\\NetBeansProjects\\cdrFile\\src\\properties\\configuration.properties";
-        String path = "./configuration.properties";
+        String path = "C:\\Users\\edgar.hurtarte\\Documents\\NetBeansProjects\\cdrFile\\src\\properties\\configuration.properties";
+        //String path = "./configuration.properties";
         
         
         //load the file handle for main.properties

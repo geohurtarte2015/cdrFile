@@ -16,6 +16,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -24,6 +25,7 @@ import java.util.ResourceBundle;
 import modelo.ConexionBD;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -67,7 +69,7 @@ public class ReadCDR extends FunctionProperties {
         
         
         ArrayList<CdrSms> arrayCdr = new ArrayList<CdrSms>();
-        
+        String arrayDestinationsNumbers=" ";
         
            
         ReadCDR readCdr = new ReadCDR();
@@ -114,9 +116,13 @@ public class ReadCDR extends FunctionProperties {
                                 }
                                 x++;
                             }
-                      
                             
-                            String arrayDestinationsNumbers = fieldCdr[50];
+                            if(fieldCdr.length<50){
+                            arrayDestinationsNumbers = fieldCdr[0];
+                            }else{
+                            arrayDestinationsNumbers = fieldCdr[50];
+                            }
+                            
                             String destinationNumber = arrayDestinationsNumbers;//Obtiene el numero destino para envio del sms filtrado
                             
                             String txtMsgDestinationNumber="";
@@ -125,7 +131,7 @@ public class ReadCDR extends FunctionProperties {
                             
                             
                             if(destinationNumber==null){
-                            destinationNumber="";
+                            destinationNumber="00000000";
                             }
                             
                             
@@ -306,7 +312,7 @@ public class ReadCDR extends FunctionProperties {
     
     
     //Obtiene los archivos Cdr's nuevos de la carpeta configurada en properties 
-    public ArrayList<FileCdr> findFilesCdr() throws IOException{
+    public ArrayList<FileCdr> findFilesCdr() throws IOException, ParseException{
         
         ArrayList<FileCdr> arrayFileCdr = new ArrayList<FileCdr>();
         ArrayList<FileCdr> newFileCdr = new ArrayList<FileCdr>();        
@@ -315,8 +321,10 @@ public class ReadCDR extends FunctionProperties {
         DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");  //Formato 06/05/2014 16:00:22
         Calendar calendar = Calendar.getInstance();
         String dateTimeToday = dateFormat.format(calendar.getTime());
-
-
+        
+        System.out.println("Inicio de busqueda de archivos"+" "+dateTimeToday);
+        
+        
         String path = this.getProperties("path");
         String type = this.getProperties("type");
         String files;
@@ -446,14 +454,23 @@ public class ReadCDR extends FunctionProperties {
     }
     
     
-    public  void sendToWebService(String json, String url) {
+    public  int sendToWebService(String json, String url,int number) {
+          int resp=0;
           
-  
+         //int CONNECTION_TIMEOUT_MS = seconds * milliseconds
+         //---------------------------------------------------------
+          int CONNECTION_TIMEOUT_MS = 5 * 1000; // Timeout in millis.
+          RequestConfig requestConfig = RequestConfig.custom()
+              .setConnectionRequestTimeout(CONNECTION_TIMEOUT_MS)
+              .setConnectTimeout(CONNECTION_TIMEOUT_MS)
+              .setSocketTimeout(CONNECTION_TIMEOUT_MS)
+              .build();
+          //--------------------------------------------------------
             
             try {
                 if(url==null){
                 url="";
-                    wsnull=" No envió registros";
+                    wsnull=" No existe URL a enviar o no hay registros";
                 }else{
                     wsnull=" Formato correcto";
                 }
@@ -461,24 +478,24 @@ public class ReadCDR extends FunctionProperties {
                 String       postUrl       = url;// put in your url       
                 HttpClient   httpClient    = HttpClientBuilder.create().build();
                 HttpPost     post          = new HttpPost(postUrl);
+                post.setConfig(requestConfig);
                 StringEntity postingString = new StringEntity(json);//gson.tojson() converts your pojo to json
                 post.setEntity(postingString);                
                 post.setHeader("Content-type", "application/json");
                 post.setHeader("Authorization", "bd4ae7ocqoq26tb48s4iinvf4m27jvomgkut8lsu2sl8mpfn4c0s");
                 try {
                     HttpResponse  response = httpClient.execute(post);
-                    System.out.println("Respuesta del Webservice: "+response.getStatusLine().getStatusCode()+wsnull);
+                    resp=response.getStatusLine().getStatusCode();
+                    System.out.println("Respuesta del Webservice: "+" "+url+" "+response.getStatusLine().getStatusCode()+wsnull);
                 } catch (IOException ex) {
                     System.out.println("Advertencia Json posible error: "+ ex);
                 }
                                     
             } catch (UnsupportedEncodingException ex) {
-                 System.out.println("Error read URL: "+ ex+wsnull);
+                 System.out.println("Error lectura URL: "+ ex+wsnull);
             }
 	
-		
+		return resp;
 	}
-
-    
 
 }
